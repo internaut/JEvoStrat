@@ -22,6 +22,7 @@ public class EvoStratTest {
         
         EvoStrat evoStrat = new EvoStrat();
         
+        evoStrat.setWorstPossibleImprov(-0.1f);
         evoStrat.setDbg(true);
         evoStrat.setTarget(t);
         

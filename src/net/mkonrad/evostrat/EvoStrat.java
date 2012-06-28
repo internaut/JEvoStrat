@@ -44,6 +44,38 @@ public class EvoStrat {
     public void setDbg(boolean dbg) {
         this.dbg = dbg;
     }
+
+    public float getMaxSD() {
+        return maxSD;
+    }
+
+    public void setMaxSD(float maxSD) {
+        this.maxSD = maxSD;
+    }
+
+    public float getSdDecreaseFactor() {
+        return sdDecreaseFactor;
+    }
+
+    public void setSdDecreaseFactor(float sdDecreaseFactor) {
+        this.sdDecreaseFactor = sdDecreaseFactor;
+    }
+
+    public int getStriveValue() {
+        return striveValue;
+    }
+
+    public void setStriveValue(int striveValue) {
+        this.striveValue = striveValue;
+    }
+
+    public float getWorstPossibleImprov() {
+        return worstPossibleImprov;
+    }
+
+    public void setWorstPossibleImprov(float worstPossibleImprov) {
+        this.worstPossibleImprov = worstPossibleImprov;
+    }
     
     public void optimize() {
         boolean isOptimized = false;
