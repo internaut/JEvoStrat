@@ -16,8 +16,8 @@ public class EvoStrat {
     private EvoOptimizable target;
     
     /**
-     * Defines in which direction we strive: To a maximum, minimum or 0.
-     * -1 means to minimum, +1 to maximum, 0 to zero.
+     * Defines in which direction we strive: To a maximum or minimum
+     * -1 means to minimum, +1 to maximum
      */
     private int striveValue;
     
@@ -103,8 +103,12 @@ public class EvoStrat {
                 // create a copy for the child
                 EvoParamCandidate childCandidate = new EvoParamCandidate(candidate);
                 
-                // create a mutated value around the mean value
-                float mutatedVal = EvoRandom.gaussianFloat(prop.getMeanVal(), childCandidate.curSD);
+                // create a VALID mutated value around the mean value
+                float mutatedVal;
+                do {
+                    mutatedVal = prop.transformValue(EvoRandom.gaussianFloat(prop.getMeanVal(), childCandidate.curSD));
+                } while (!prop.isValidValue(mutatedVal));
+                
                 childCandidate.val = mutatedVal;
                 
                 // save it as child
@@ -146,7 +150,7 @@ public class EvoStrat {
             }
             
             // check if we switch to a new generation
-            float randChoice = EvoRandom.gaussianFloat(0.0f, randChoiceSD);
+            float randChoice = Math.abs(EvoRandom.gaussianFloat(0.0f, randChoiceSD));
             if (improv > 0 || (randChoice >= randChoiceSD / 2.0f && improv >= worstPossibleImprov)) {
                 if (dbg) {
                     System.out.println("> switched generation! child is now new parent.");
@@ -154,11 +158,9 @@ public class EvoStrat {
                 
                 // swap values
                 parentFitness = childFitness;
-                paramCandidatesParent = paramCandidatesChild;
+                paramCandidatesParent = (HashMap<String, EvoParamCandidate>)paramCandidatesChild.clone();
                 
-                // update SD values
-                randChoiceSD *= sdDecreaseFactor;
-                
+                // update SD values                
                 for (EvoParamProperties prop : paramProps) {
                     EvoParamCandidate candidate = paramCandidatesParent.get(prop.getName());
                     
@@ -170,8 +172,12 @@ public class EvoStrat {
                 }
             }
             
+            paramCandidatesChild.clear();
+            
+            randChoiceSD *= sdDecreaseFactor;
+            
             // check if we want to optimize any further
-            isOptimized = randChoiceSD <= 0.10f;
+            isOptimized = randChoiceSD <= 0.000001f;
             
             // increase number of iterations
             iter++;

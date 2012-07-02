@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import net.mkonrad.evostrat.EvoOptimizable;
 import net.mkonrad.evostrat.EvoParam;
+import net.mkonrad.evostrat.EvoParamConditionMinMax;
 import net.mkonrad.evostrat.EvoParamProperties;
 
 /**
@@ -23,6 +24,7 @@ public class FuncTest implements EvoOptimizable {
         paramProps = new HashSet<EvoParamProperties>();
         
         EvoParamProperties propX = new EvoParamProperties("x", 0.0f, 5.0f, 0.8f, 0.1f);
+        propX.addParamCondition(new EvoParamConditionMinMax(0.0f, 1.0f));
         paramProps.add(propX);
     }
     
