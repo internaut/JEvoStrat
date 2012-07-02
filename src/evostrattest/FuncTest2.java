@@ -15,17 +15,21 @@ import net.mkonrad.evostrat.EvoParamProperties;
  *
  * @author markus
  */
-public class FuncTest implements EvoOptimizable {
+public class FuncTest2 implements EvoOptimizable {
     private HashMap<String, EvoParam> params;
     private HashSet<EvoParamProperties> paramProps;
 
-    public FuncTest() {
+    public FuncTest2() {
         params = new HashMap<String,EvoParam>();
         paramProps = new HashSet<EvoParamProperties>();
         
-        EvoParamProperties propX = new EvoParamProperties("x", 0.5f, 1.0f, 0.9f, 0.1f);
+        EvoParamProperties propX = new EvoParamProperties("x", 0.0f, 1.0f, 0.9f, 0.1f);
+        EvoParamProperties propY = new EvoParamProperties("y", 0.0f, 1.0f, 0.9f, 0.1f);
+        
         propX.addParamCondition(new EvoParamConditionMinMax(0.0f, 1.0f));
         paramProps.add(propX);
+        propY.addParamCondition(new EvoParamConditionMinMax(0.0f, 1.0f));
+        paramProps.add(propY);
     }
     
     @Override
@@ -40,14 +44,19 @@ public class FuncTest implements EvoOptimizable {
 
     @Override
     public float makeTestRun() {
-        float y;
         float x = params.get("x").val;
+        float y = params.get("y").val;
         
-//        y = (float)Math.sin(x * Math.PI);     // max: x = 0.5, y = 1.0
-//        y = (float)Math.sin(x * x * Math.PI);   // max: x = 0.705, y = 1.0
-        y = (float)Math.cos(x * Math.PI) + x;   // max: x = 0.1, y = 1.05
+        float n = 9.0f;
         
-        return y;
+        // optimal sol.: x = 0.5, y = 0.5, z = 0.878
+        float z = (float)Math.pow(
+                  15.0f * x * y * (1.0f - x) * (1.0f - y)
+                * (float)Math.sin(n * Math.PI * x)
+                * (float)Math.sin(n * Math.PI * y),
+                  2);
+        
+        return z;
     }
 
     @Override
