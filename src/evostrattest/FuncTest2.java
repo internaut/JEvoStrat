@@ -49,7 +49,7 @@ public class FuncTest2 implements EvoOptimizable {
         
         float n = 9.0f;
         
-        // optimal sol.: x = 0.5, y = 0.5, z = 0.878
+        // maximum at x = 0.5, y = 0.5 with z = 0.878
         float z = (float)Math.pow(
                   15.0f * x * y * (1.0f - x) * (1.0f - y)
                 * (float)Math.sin(n * Math.PI * x)
