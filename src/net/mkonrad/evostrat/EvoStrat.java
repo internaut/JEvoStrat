@@ -203,11 +203,6 @@ public class EvoStrat {
         this.target = target;
     }
     
-    private void updateParamValue(EvoParamProperties prop, EvoParamCandidate param) {
-        float g = EvoRandom.gaussianFloat(prop.getMeanVal(), param.curSD);
-        
-    }
-    
     private class EvoParamCandidate extends EvoParam {
         float curSD;
         
