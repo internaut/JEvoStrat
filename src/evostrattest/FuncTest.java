@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package evostrattest;
 
 import java.util.HashMap;
@@ -12,8 +8,9 @@ import net.mkonrad.evostrat.EvoParamConditionMinMax;
 import net.mkonrad.evostrat.EvoParamProperties;
 
 /**
- *
- * @author markus
+ * Test class that wants its parameter "x" to be optimized.
+ * 
+ * @author Markus Konrad - <post@mkonrad.net>
  */
 public class FuncTest implements EvoOptimizable {
     private HashMap<String, EvoParam> params;
