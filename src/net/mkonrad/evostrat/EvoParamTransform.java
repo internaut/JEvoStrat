@@ -1,13 +1,15 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package net.mkonrad.evostrat;
 
 /**
- *
- * @author markus
+ * Abstract class for transforming parameter values.
+ * 
+ * @author Markus Konrad <post@mkonrad.net>
  */
 abstract public class EvoParamTransform {
+    /**
+     * Transform the value <v>.
+     * @param v value
+     * @return transformed value
+     */
     abstract public float transformValue(float v);
 }

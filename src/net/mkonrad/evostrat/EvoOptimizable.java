@@ -1,14 +1,12 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package net.mkonrad.evostrat;
 
 import java.util.HashSet;
 
 /**
- *
- * @author markus
+ * Interface for a class that wants to optimize its parameters using
+ * Evolutionary strategy.
+ * 
+ * @author Markus Konrad <post@mkonrad.net>
  */
 public interface EvoOptimizable {
     /**

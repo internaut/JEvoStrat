@@ -1,14 +1,13 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package net.mkonrad.evostrat;
 
+import java.io.Serializable;
+
 /**
- *
- * @author markus
+ * Generic parameter with name and value.
+ * 
+ * @author Markus Konrad <post@mkonrad.net>
  */
-public class EvoParam {
+public class EvoParam implements Serializable {
     public String name;
     public float val;
 }

@@ -1,12 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package net.mkonrad.evostrat;
 
 /**
- *
- * @author markus
+ * Class for transforming float values to descrete values with a specified base.
+ * By default rounds the value to become an integer value.
+ * 
+ * @author Markus Konrad <post@mkonrad.net>
  */
 public class EvoParamTransformDescrete extends EvoParamTransform {
     public float base;

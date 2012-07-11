@@ -1,17 +1,21 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package net.mkonrad.evostrat;
 
 /**
- *
- * @author markus
+ * Parameter condition for minimum and maximum value.
+ * 
+ * @author Markus Konrad <post@mkonrad.net>
  */
 public class EvoParamConditionMinMax extends EvoParamCondition {
-    float minVal;
-    float maxVal;
+    public float minVal;
+    public float maxVal;
     
+    /**
+     * Create a condition for a parameter with <min> minimum value and <max>
+     * maximum value.
+     * 
+     * @param min minimum value
+     * @param max maximum value
+     */
     public EvoParamConditionMinMax(float min, float max) {
         minVal = min;
         maxVal = max;

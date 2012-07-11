@@ -1,18 +1,21 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package net.mkonrad.evostrat;
 
+import java.io.*;
 import java.util.HashMap;
 import java.util.HashSet;
-
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
- *
- * @author markus
+ * Implementation of the "Evolutionsstrategie" (Evolutionary Strategy) of
+ * Ingo Rechenberg.
+ * 
+ * @author Markus Konrad <post@mkonrad.net>
  */
 public class EvoStrat {
+    /**
+     * Target to be optimized.
+     */
     private EvoOptimizable target;
     
     /**
@@ -21,20 +24,61 @@ public class EvoStrat {
      */
     private int striveValue;
     
+    /**
+     * FIFO queue with last <fitnessListSize> values.
+     */
+    private LinkedList<Float> fitnessList;
+    
+    /**
+     * Result parameters.
+     */
     private HashSet<EvoParam> optimizedParams;
     
+    /**
+     * Size of the fitness list, i.e. how many of the last fitness results are
+     * saved in the <fitnessList>.
+     */
+    private int fitnessListSize;
+    
+    /**
+     * Minimum fitness list entropy until computation terminates.
+     */
+    private float minFitnessEntropy;
+    
+    /**
+     * Initial standard deviation.
+     */
     private float maxSD;
+    
+    /**
+     * Decrease factor for the standard deviation.
+     */
     private float sdDecreaseFactor;
+    
+    /**
+     * Worst impossible fitness "improve" value when considering taking a worse
+     * child than the current parent.
+     */
     private float worstPossibleImprov;
     
+    /**
+     * Debug output on/off.
+     */
     private boolean dbg;
     
+    /**
+     * Create the Evolutionary Strategy class with default values.
+     */
     public EvoStrat() {
         dbg = false;
         striveValue = 1;
         maxSD = 1.0f;
         sdDecreaseFactor = 0.8f;
-        worstPossibleImprov = -10.0f;
+        worstPossibleImprov = -1.0f;
+        fitnessListSize = 10;
+        
+        fitnessList = new LinkedList<Float>();
+        minFitnessEntropy = 1.0f;
     }
 
     public boolean isDbg() {
@@ -76,8 +120,102 @@ public class EvoStrat {
     public void setWorstPossibleImprov(float worstPossibleImprov) {
         this.worstPossibleImprov = worstPossibleImprov;
     }
+
+    public int getFitnessListSize() {
+        return fitnessListSize;
+    }
+
+    public void setFitnessListSize(int fitnessListSize) {
+        this.fitnessListSize = fitnessListSize;
+    }
+
+    public float getMinFitnessEntropy() {
+        return minFitnessEntropy;
+    }
+
+    public void setMinFitnessEntropy(float minFitnessEntropy) {
+        this.minFitnessEntropy = minFitnessEntropy;
+    }
     
+    /**
+     * Load parameter values from a file.
+     * @param file path to save-file
+     * @return true on success, else false.
+     */
+    public boolean load(String file) {
+        File f = new File(file);
+        if (!f.canRead()) {
+            return false;
+        }
+        
+        try {
+            FileInputStream fis = new FileInputStream(f);
+            ObjectInputStream in = new ObjectInputStream(fis);
+            
+            optimizedParams = (HashSet<EvoParam>)in.readObject();
+            
+            in.close();
+            fis.close();
+        } catch (IOException ex) {
+            System.err.println("IO Error - could not load file " + file);
+            System.err.println("Reason: " + ex.getMessage());
+            return false;
+        } catch(ClassNotFoundException ex) {
+            System.err.println("Class not found error - could not load file " + file);
+            System.err.println("Reason: " + ex.getMessage());
+            return false;            
+        }
+        
+        System.out.println("Loaded parameters:");
+        
+        for (EvoParam param : optimizedParams) {
+            System.out.println("> param " + param.name + " = " + param.val);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Save the current optimized values in a file.
+     * @param file path to save-file
+     * @return true on success, else false.
+     */
+    public boolean save(String file) {
+        if (optimizedParams == null || optimizedParams.size() <= 0) {
+            System.err.println("There are no optimized parameters to save!");
+            
+            return false;
+        }
+        
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream out = new ObjectOutputStream(fos);
+            
+            out.writeObject(optimizedParams);
+            
+            out.close();
+            fos.close();
+        } catch (IOException ex) {
+            System.err.println("Could not save file " + file);
+            System.err.println("Reason: " + ex.getMessage());
+            return false;
+        }
+        
+        System.out.println("Saved parameters:");
+        
+        for (EvoParam param : optimizedParams) {
+            System.out.println("> param " + param.name + " = " + param.val);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Start the optimization process.
+     */
     public void optimize() {
+        fitnessList.clear();
+        
         boolean isOptimized = false;
         HashSet<EvoParamProperties> paramProps = target.getParamPropertiesSet();
         HashMap<String, EvoParamCandidate> paramCandidatesParent = new HashMap<String, EvoParamCandidate>(paramProps.size());
@@ -85,6 +223,7 @@ public class EvoStrat {
         float childFitness, parentFitness = -Float.MAX_VALUE;
         float randChoiceSD = maxSD;
         int iter = 0;
+        float fitnessEntropy = Float.MAX_VALUE;
         
         while (!isOptimized) {
             // mutate each parameter
@@ -93,20 +232,20 @@ public class EvoStrat {
                 String paramName = prop.getName();
                 
                 // get the parameter candidate from the parent
-                EvoParamCandidate candidate = paramCandidatesParent.get(paramName);
+                EvoParamCandidate parentCandidate = paramCandidatesParent.get(paramName);
                 
-                if (candidate == null) {    // create a candidate if it does not exist yet (1st run)
-                    candidate = new EvoParamCandidate(paramName, prop.getMaxSD());
-                    paramCandidatesParent.put(paramName, candidate);
+                if (parentCandidate == null) {    // create a candidate if it does not exist yet (1st run)
+                    parentCandidate = new EvoParamCandidate(paramName, prop.getMeanVal());
+                    paramCandidatesParent.put(paramName, parentCandidate);
                 }
                 
                 // create a copy for the child
-                EvoParamCandidate childCandidate = new EvoParamCandidate(candidate);
+                EvoParamCandidate childCandidate = new EvoParamCandidate(parentCandidate);
                 
                 // create a VALID mutated value around the mean value
                 float mutatedVal;
                 do {
-                    mutatedVal = prop.transformValue(EvoRandom.gaussianFloat(prop.getMeanVal(), childCandidate.curSD));
+                    mutatedVal = prop.transformValue(EvoRandom.gaussianFloat(parentCandidate.val, childCandidate.curSD));
                 } while (!prop.isValidValue(mutatedVal));
                 
                 childCandidate.val = mutatedVal;
@@ -166,6 +305,13 @@ public class EvoStrat {
                     
                     candidate.curSD *= prop.getSdDecreaseFactor();
                 }
+                
+                // add to fitness list
+                fitnessList.add(new Float(parentFitness));
+                if (fitnessList.size() > fitnessListSize) {
+                    fitnessList.poll();
+                    fitnessEntropy = calcEntropy(fitnessList);
+                }
             } else {
                 if (dbg) {
                     System.out.println("> dismissed child.");
@@ -177,7 +323,7 @@ public class EvoStrat {
             randChoiceSD *= sdDecreaseFactor;
             
             // check if we want to optimize any further
-            isOptimized = randChoiceSD <= 0.000001f;
+            isOptimized = randChoiceSD <= 0.000001f || fitnessEntropy <= minFitnessEntropy;
             
             // increase number of iterations
             iter++;
@@ -191,6 +337,10 @@ public class EvoStrat {
         }
     }
     
+    /**
+     * Return the optimized parameters.
+     * @return 
+     */
     public HashSet<EvoParam> getOptimizedParams() {
         return optimizedParams;
     }
@@ -203,7 +353,33 @@ public class EvoStrat {
         this.target = target;
     }
     
-    private class EvoParamCandidate extends EvoParam {
+    
+    /**
+     * Calculate the entropy of a list.
+     * @param list
+     * @return 
+     */
+    private float calcEntropy(Iterable list) {
+        float entropy = -Float.MAX_VALUE;
+        
+        Iterator it = list.iterator();
+        float lastVal = ((Float)it.next()).floatValue();
+        while (it.hasNext()) {
+            float curVal = ((Float)it.next()).floatValue();
+//            float d = (lastVal - curVal) * (lastVal - curVal);
+            float d = Math.abs(lastVal - curVal);
+            if (d > entropy) {
+                entropy = d;
+            }
+        }
+        
+        return entropy;
+    }
+    
+    /**
+     * Extended EvoParam with a standard deviation value.
+     */
+    static private class EvoParamCandidate extends EvoParam implements Serializable {
         float curSD;
         
         public EvoParamCandidate(String name, float curSD) {
